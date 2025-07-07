@@ -8,12 +8,45 @@ from database.trinoQueryEngine import TrinoQueryEngine
 
 chat_router = APIRouter()
 
-@chat_router.get("/chat")
-async def chat(request: ChatRequest, http_request: Request):
+@chat_router.post("/chat")
+async def chat(request: ChatRequest):
     question = request.question
+    ticker = request.ticker
+    from_date = request.from_date
+    to_date = request.to_date
+
     llm_service = LLMService()
-    trino_engine = TrinoQueryEngine()
-    steps = llm_service.generate_steps(question)
-    query = llm_service.generate_trino_query(steps, question)
-    data = trino_engine.execute_query(query["query"])
-    return StreamingResponse(event_generator(llm_service.summarise_data(data, question)), media_type="text/event-stream")
+    """
+    get the intent of the question
+    """
+    question += "\nticker chosen by the user: " + ticker
+    if from_date is not None:
+        question += "\nfrom date: " + from_date.strftime("%Y-%m-%d")
+    if to_date is not None:
+        question += "\nto date: " + to_date.strftime("%Y-%m-%d")
+    intent = llm_service.get_intent(question)
+    print(intent)
+    """
+    generate steps based on the intent
+    """
+    steps = llm_service.generate_steps(question, intent)
+    print(steps)
+    """
+    generate trino query based on the steps
+    """
+    query = llm_service.generate_trino_query(steps)
+    print(query['query'])
+    """
+    execute the query
+    """
+    query_string = query['query']
+    data = llm_service.trino_instance.execute_query(query_string)
+    print(data)
+    """
+    generate summary based on the data
+    """
+    return StreamingResponse(
+        event_generator(llm_service.generate_summary(data, intent, question)),
+        media_type="text/event-stream"    
+    )
+    

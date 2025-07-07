@@ -1,5 +1,6 @@
 from .trino_connection import trino_connection
 from dotenv import load_dotenv
+import pandas as pd
 
 load_dotenv()
 
@@ -8,16 +9,16 @@ class TrinoQueryEngine:
         pass
 
     def execute_query(self, query: str):
-        with trino_connection.connection() as conn:
-            if conn is None:
-                raise Exception("Not connected to Trino")
-            query = """
-                SELECT aggregates['close'] AS close_price  
-                FROM academy.monk_data_warehouse.fct_daily_prices  
-                WHERE ticker = 'AAPL'  
-                AND date = DATE '2021-02-17' 
-            """
-            cursor = conn.cursor()
-            cursor.execute(query)
-            return cursor.fetchall()
+        try:
+            with trino_connection.connection() as conn:
+                if conn is None:
+                    raise Exception("Not connected to Trino")
+                cursor = conn.cursor()
+                cursor.execute(query)
+                rows = cursor.fetchall()
+                cols = [col[0] for col in cursor.description]
+
+                return pd.DataFrame(rows, columns=cols)
+        except Exception as e:
+            return pd.DataFrame({"error": ["Unable to process data. Can you try again?"]})
 
