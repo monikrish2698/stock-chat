@@ -1,4 +1,4 @@
-# Stock Chat - Natural Language Interface for Tabular Data
+# Stock Chat - Natural Language Interface for Querying Daily US Stock Data
 
 Stock Chat is a powerful application that enables users to interact with tabular data using natural language. Built with FastAPI and leveraging large language models, it provides an intuitive way to query and analyze data through simple chat-like interactions.
 
@@ -13,7 +13,6 @@ Stock Chat is a powerful application that enables users to interact with tabular
 ## Prerequisites
 
 - Python 3.9+
-- Redis server
 - Trino server (or compatible data source)
 - OpenAI API key
 
